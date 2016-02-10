@@ -30,7 +30,8 @@
             android:layout_height="wrap_content"
             android:drawable="@drawable/round_shape_button"
             android:text="@string/lookupButton"
-            android:id="@+id/lookupButton" />
+            android:id="@+id/lookupButton"
+            android:onClick="onClick" />
     </TableLayout>
 
     <TextView
@@ -54,7 +55,8 @@
         android:layout_height="447dp"
         android:layout_gravity="center"
         android:background="#ffffff"
-        android:id="@+id/FetchedAddress">
+        android:id="@+id/FetchedAddress"
+        android:visibility="invisible">
 
         <TextView
             android:layout_width="303dp"
