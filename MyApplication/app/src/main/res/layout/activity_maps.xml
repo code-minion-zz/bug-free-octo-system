@@ -13,15 +13,6 @@
         class="com.google.android.gms.maps.SupportMapFragment"
         android:layout_gravity="center_horizontal|top" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="right|top"
-        android:text="Demo Button"
-        android:padding="10dp"
-        android:layout_marginTop="20dp"
-        android:paddingRight="10dp" />
-
     <TableLayout
         android:layout_width="match_parent"
         android:layout_height="300dp"
@@ -39,7 +30,46 @@
             android:layout_height="wrap_content"
             android:drawable="@drawable/round_shape_button"
             android:text="@string/lookupButton"
-            android:id="@+id/button" />
+            android:id="@+id/lookupButton" />
     </TableLayout>
+
+    <TextView
+        android:layout_width="303dp"
+        android:layout_height="180dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:gravity="center"
+        android:text="@string/pleasewaitforgps"
+        android:id="@+id/textView"
+        android:layout_gravity="center"
+        android:textColor="#c8ffffff"
+        android:textSize="30dp"
+        android:textIsSelectable="false"
+        android:textStyle="bold"
+        android:background="#c9000000"
+        android:enabled="false"
+        android:visibility="invisible" />
+
+    <FrameLayout
+        android:layout_width="332dp"
+        android:layout_height="447dp"
+        android:layout_gravity="center"
+        android:background="#ffffff"
+        android:id="@+id/FetchedAddress">
+
+        <TextView
+            android:layout_width="303dp"
+            android:layout_height="422dp"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:gravity="center"
+            android:text="@string/addressString"
+            android:id="@+id/textView2"
+            android:layout_gravity="center"
+            android:textColor="#000000"
+            android:textSize="25dp"
+            android:textIsSelectable="false"
+            android:textStyle="bold"
+            android:enabled="false"
+            android:visibility="visible" />
+    </FrameLayout>
 
 </FrameLayout>
