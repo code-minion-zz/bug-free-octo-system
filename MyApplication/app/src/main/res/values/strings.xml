@@ -2,7 +2,7 @@
     <string name="app_name">My Application</string>
     <string name="title_activity_maps">Map</string>
     <string name="lookupButton">Lookup Current Address</string>
-    <string name="pleasewaitforgps">Please wait\nlooking up address from current GPS...</string>
+    <string name="pleasewaitforgps">Please wait\nlooking up address\nfrom current GPS...</string>
     <string name="addressString">117 St Georges Bay Road, Parnell, Auckland 1052\nFetched at 12:35pm\n\nGPS Coordinates:\n-36.8508787 174.7825545</string>
     <string name="swipeDown">Swipe down to dismiss</string>
 </resources>

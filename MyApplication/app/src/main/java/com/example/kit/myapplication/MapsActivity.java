@@ -1,8 +1,8 @@
 package com.example.kit.myapplication;
 
+//region "imports"
 import android.Manifest;
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -16,12 +16,13 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.app.AlertDialog;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
@@ -43,29 +44,44 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+//endregion
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, View.OnClickListener, GoogleApiClient.ConnectionCallbacks, ActivityCompat.OnRequestPermissionsResultCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
+        View.OnClickListener,
+        GoogleApiClient.ConnectionCallbacks,
+        ActivityCompat.OnRequestPermissionsResultCallback,
+        DialogInterface.OnCancelListener,
+        OnGeoLookupCompleted {
 
-    private GoogleMap mMap;
+    //region "other classes that arent widgets"
     private GoogleApiClient mGoogleApiClient;
     private GestureDetector mGestureDetector;
-
-    private Location mCurrentLocation;
+    private GeoLookup mGeoLookup;
     private LocationManager mLocationManager;
     private MyLocationListener mLocationListener = new MyLocationListener();
+    //endregion
 
+    //region "widgets"
+    private GoogleMap mMap;
     private ListView mListView;
     private FrameLayout mFetchedAddressLayout;
     private TextView mAddressLabel;
     private Button mLookupButton;
+    private AlertDialog mPleaseWait;
+    //endregion
 
+    //region "lists and adapters"
     ArrayList<String> mListItems = new ArrayList<String>();
     ArrayAdapter<String> mAdapter;
+    //endregion
 
+    //region "constants"
     final int PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 124;
     final int LOCATION_REFRESH_TIME = 10;
     final int LOCATION_REFRESH_DISTANCE = 10;
+    //endregion
 
+    //region "initialization"
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,7 +99,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
             mListView = (ListView) findViewById(R.id.locationList);
-            mAdapter = new ArrayAdapter<String>(this, R.layout.list_view_element, mListItems);
+            mAdapter = new LocationsAdapter(this, R.layout.list_view_element, mListItems);
             mListView.setAdapter(mAdapter);
             mLookupButton = (Button) findViewById(R.id.lookupButton);
             mLookupButton.setOnClickListener(this);
@@ -108,13 +124,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             spawnAlertDialog("ERROR", error.getCause().toString());
         }
     }
+    //endregion
 
-    public boolean dispatchTouchEVent(MotionEvent ev) {
-        super.dispatchTouchEvent(ev);
-
-        return mGestureDetector.onTouchEvent(ev);
-    }
-
+    //region "callbacks"
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -146,13 +158,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // allow user to cancel location update by dismissing modal window
 //            spawnAlertDialog("SUCCESS", "CLICKED");
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                Address address = getAddress(mLocationListener.currentLocation);
+//                Address address = getAddress(mLocationListener.currentLocation);
+
+                mGeoLookup = new GeoLookup(this, this, mLocationListener.currentLocation);
+                mPleaseWait = new AlertDialog.Builder(this).create();
+                mPleaseWait.setMessage(getString(R.string.pleasewaitforgps));
+                mPleaseWait.setOnCancelListener(this);
+                mPleaseWait.setCancelable(true);
+                mPleaseWait.setCanceledOnTouchOutside(true);
 
                 // display address window
-                showAddressWindow(address, mLocationListener.currentLocation);
-                addItems(address);
+//                showAddressWindow(address, mLocationListener.currentLocation);
+//                addItems(address);
             }
         }
+    }
+
+
+    @Override
+    public void onCancel(DialogInterface dialog) {
+        if (mGeoLookup != null)
+        {
+            mGeoLookup.cancel(true);
+            mGeoLookup = null;
+        }
+    }
+
+    public void onGeoLookupCompleted() {
+        if (mPleaseWait != null)
+        {
+            mPleaseWait.cancel();
+            mPleaseWait = null;
+        }
+        // show window, add item
     }
 
     @Override
@@ -177,9 +215,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onConnected(Bundle bundle) {
         try {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                mCurrentLocation = LocationServices
-                        .FusedLocationApi
-                        .getLastLocation(mGoogleApiClient);
+
                 mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, mLocationListener);
             }
         } catch (Error error) {
@@ -219,6 +255,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // permissions this app might request
         }
     }
+    //endregion
 
     /// helper classes below
     void showAddressWindow(Address address, LatLng coords) {
@@ -277,7 +314,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (address == null) return;
 
         String currentTimeString = DateFormat.getTimeInstance().format(new Date());
-        mAdapter.add(currentTimeString + " - " + address.getAddressLine(0));
+        mListItems.add(0, currentTimeString + " - " + address.getAddressLine(0));
+        mAdapter.notifyDataSetChanged();
     }
 
     void spawnAlertDialog(String title, String message) {
@@ -381,54 +419,82 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public class GPSLocation extends AsyncTask<Void, Void, Void> {
-        boolean running = true;
+//    public class PastLocations
+//    {
+//        public String time;
+//        public String address;
+//    }
+
+    public class LocationsAdapter extends ArrayAdapter<String> {
+        public LocationsAdapter(Context context, int res, ArrayList<String> locations) {
+            super(context, 0, locations);
+        }
 
         @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
+        public View getView(int position, View convertView, ViewGroup parent) {
+            String prevLocation = getItem(position);
 
-            LocationManager mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            LocationListener mlocListener = new MyLocationListener();
-            if (ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_view_element, parent, false);
             }
-            mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mlocListener);
 
+            TextView tvLocation = (TextView)convertView.findViewById(R.id.tvLocation);
+
+            tvLocation.setText(prevLocation);
+
+            return convertView;
+        }
+    }
+
+    public class GeoLookup extends AsyncTask<Void, Void, Void> {
+        boolean running = true;
+        private OnGeoLookupCompleted listener;
+        public Address address;
+        private Context context;
+        private LatLng coords;
+
+        public GeoLookup(OnGeoLookupCompleted listener, Context context, LatLng coords)
+        {
+            this.listener = listener;
+            this.context = context;
+            this.coords = coords;
+        }
+
+        /// returns closest address to given coords
+        Address getAddress(LatLng coords) {
+            Geocoder mGeocoder = new Geocoder(context);
+            Address address = null;
+
+            try {
+                address = mGeocoder
+                        .getFromLocation(coords.latitude, coords.longitude, 1)
+                        .get(0);
+            } catch (IOException e) {
+                spawnAlertDialog("ERROR", e.getCause().toString());
+            }
+            return address;
         }
 
         @Override
         protected void onProgressUpdate(Void... values) {
             super.onProgressUpdate(values);
             // Things to be done while execution of long running operation is in progress. For example updating ProgessDialog
+
         }
 
         @Override
         protected void onPostExecute(Void result)
         {
+            listener.onGeoLookupCompleted();
         }
 
         @Override
         protected Void doInBackground(Void... params) {
-            boolean isDataSubmitted = false;
 
-            while(!isDataSubmitted)
-            {
-//                if(longitude !=0 && latitude!=0)
-//                {
-//                    sendSMS();
-//                    isDataSubmitted = true;
-//                }
-            }
+            address = getAddress(coords);
 
             return null;
         }
     }
+
 }

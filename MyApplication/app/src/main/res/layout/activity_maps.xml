@@ -16,22 +16,25 @@
     <TableLayout
         android:layout_width="match_parent"
         android:layout_height="300dp"
-        android:layout_gravity="bottom">
+        android:layout_gravity="bottom"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
 
         <ListView
             android:layout_width="wrap_content"
-            android:layout_height="200dp"
+            android:layout_height="220dp"
             android:choiceMode="none"
             android:id="@+id/locationList"
-            android:layout_marginTop="50dp" />
+            android:layout_marginTop="30dp" />
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:drawable="@drawable/round_shape_button"
             android:text="@string/lookupButton"
             android:id="@+id/lookupButton"
-            android:onClick="onClick" />
+            android:onClick="onClick"
+            android:layout_gravity="bottom" />
 
     </TableLayout>
 
