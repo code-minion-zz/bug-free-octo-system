@@ -3,6 +3,7 @@ package com.example.kit.myapplication;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -20,6 +21,7 @@ public class MyLocationListener implements LocationListener {
     public void onLocationChanged(Location location) {
         currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
         lastUpdate = Calendar.getInstance().get(Calendar.SECOND);
+        Log.d("kit", "LocationUpdated");
     }
 
     @Override

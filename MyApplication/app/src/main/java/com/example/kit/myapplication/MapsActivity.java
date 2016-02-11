@@ -8,17 +8,24 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.app.AlertDialog;
-import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -27,21 +34,29 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, View.OnClickListener, GoogleApiClient.ConnectionCallbacks, ActivityCompat.OnRequestPermissionsResultCallback {
 
     private GoogleMap mMap;
-    private GoogleApiClient client;
+    private GoogleApiClient mGoogleApiClient;
+    private GestureDetector mGestureDetector;
 
     private Location mCurrentLocation;
     private LocationManager mLocationManager;
     private MyLocationListener mLocationListener = new MyLocationListener();
-    private Geocoder mGeocoder;
 
+    private ListView mListView;
+    private FrameLayout mFetchedAddressLayout;
+    private TextView mAddressLabel;
     private Button mLookupButton;
+
+    ArrayList<String> mListItems = new ArrayList<String>();
+    ArrayAdapter<String> mAdapter;
 
     final int PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 124;
     final int LOCATION_REFRESH_TIME = 10;
@@ -63,16 +78,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             getSupportActionBar().hide();
 
             mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+            mListView = (ListView) findViewById(R.id.testList);
+            mAdapter = new ArrayAdapter<String>(this, R.layout.activity_maps, mListItems);
+            mListView.setAdapter(mAdapter);
             mLookupButton = (Button) findViewById(R.id.lookupButton);
             mLookupButton.setOnClickListener(this);
+            mFetchedAddressLayout = (FrameLayout)findViewById(R.id.addressFrame);
+            mAddressLabel = (TextView) mFetchedAddressLayout.getChildAt(0);
 
-            client = new GoogleApiClient.Builder(this)
+            mGestureDetector = new GestureDetector(new MyGestureListener());
+            mFetchedAddressLayout.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    mGestureDetector.onTouchEvent(event);
+
+                    return true;
+                }
+            });
+
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addApi(LocationServices.API).build();
 
         } catch (Error error) {
             spawnAlertDialog("ERROR", error.getCause().toString());
         }
+    }
+
+    public boolean dispatchTouchEVent(MotionEvent ev)
+    {
+        super.dispatchTouchEvent(ev);
+
+        return mGestureDetector.onTouchEvent(ev);
     }
 
     /**
@@ -97,15 +135,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // GPS not enabled, alert user
             spawnAlertDialog("ERROR", "GPS Location Services is not enabled, please enable GPS before trying again.");
         } else {
+            if (mLocationListener.currentLocation == null)
+            {
+                spawnAlertDialog("Not Ready", "Your location could not be determined, wait a bit and try again");
+                return;
+            }
+
             // GPS enabled, display modal window, request location update, wait for response
             // allow user to cancel location update by dismissing modal window
 //            spawnAlertDialog("SUCCESS", "CLICKED");
             if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
             {
-                String address = getAddress(mLocationListener.currentLocation);
-                Log.d("kit", address);
-                spawnAlertDialog("SUCCESS", address);
+                Address address = getAddress(mLocationListener.currentLocation);
+
                 // display address window
+                showAddressWindow(address, mLocationListener.currentLocation);
+//                addItems(address);
             }
         }
     }
@@ -114,7 +159,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onStart() {
         super.onStart();
 
-        client.connect();
+        mGoogleApiClient.connect();
 
     }
 
@@ -122,9 +167,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onStop() {
         super.onStop();
 
-        if (client != null && client.isConnected())
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected())
         {
-            client.disconnect();
+            mGoogleApiClient.disconnect();
         }
     }
 
@@ -136,7 +181,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             {
                 mCurrentLocation = LocationServices
                         .FusedLocationApi
-                        .getLastLocation(client);
+                        .getLastLocation(mGoogleApiClient);
                 mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, mLocationListener);
             }
         }
@@ -178,7 +223,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // permissions this app might request
         }
     }
+
 /// helper classes below
+    void showAddressWindow(Address address, LatLng coords)
+    {
+        String currentTimeString = DateFormat.getTimeInstance().format(new Date());
+        String stringAddress = "";
+        if (address != null)
+        {
+            for (int i = 0; i < address.getMaxAddressLineIndex(); i++)
+            {
+                stringAddress += address.getAddressLine(i);
+            }
+        }
+        else
+        {
+            spawnAlertDialog("Not Found", "There are no addresses nearby your location");
+            return;
+        }
+        mAddressLabel.setText(stringAddress + "\nFetched at " + currentTimeString+ "\n\nGPS Coordinates:\n" + coords.latitude + " " + coords.longitude);
+        mFetchedAddressLayout.setVisibility(View.VISIBLE);
+
+    }
 
     void setupMap()
     {
@@ -225,6 +291,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    void addItems(Address address)
+    {
+        if (address == null) return;
+
+        String currentTimeString = DateFormat.getTimeInstance().format(new Date());
+        mListItems.add(0, currentTimeString + " - " + address.getAddressLine(0));
+        mAdapter.notifyDataSetChanged();
+        mAdapter.add(currentTimeString + " - " + address.getAddressLine(0));
+    }
+
     void spawnAlertDialog(String title, String message)
     {
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
@@ -242,32 +318,92 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /// returns closest address to given coords
-    String getAddress(LatLng coords)
+    Address getAddress(LatLng coords)
     {
-        mGeocoder = new Geocoder(this);
-        String stringAddress = "";
+        Geocoder mGeocoder = new Geocoder(this);
+        Address address = null;
 
         try {
-            Address address = mGeocoder
+            address = mGeocoder
                     .getFromLocation(coords.latitude, coords.longitude, 1)
                     .get(0);
-
-            if (address != null)
-            {
-                for (int i = 0; i < address.getMaxAddressLineIndex(); i++)
-                {
-                    stringAddress += address.getAddressLine(i);
-                }
-            }
-            else
-            {
-                spawnAlertDialog("Not Found", "There are no addresses nearby your location");
-            }
         }
         catch (IOException e)
         {
             spawnAlertDialog("ERROR", e.getCause().toString());
         }
-        return stringAddress;
+        return address;
+    }
+
+    class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+
+
+        private static final int SWIPE_MIN_DISTANCE = 20;
+
+        private static final int SWIPE_MAX_OFF_PATH = 100;
+
+        private static final int SWIPE_THRESHOLD_VELOCITY = 100;
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+
+                               float velocityY) {
+
+            float dX = e2.getX() - e1.getX();
+
+            float dY = e1.getY() - e2.getY();
+
+            if (Math.abs(dY) < SWIPE_MAX_OFF_PATH &&
+
+                    Math.abs(velocityX) >= SWIPE_THRESHOLD_VELOCITY &&
+
+                    Math.abs(dX) >= SWIPE_MIN_DISTANCE) {
+
+                if (dX > 0) {
+
+                    Toast.makeText(getApplicationContext(), "Right Swipe",
+                            Toast.LENGTH_SHORT).show();
+
+                } else {
+
+                    Toast.makeText(getApplicationContext(), "Left Swipe",
+                            Toast.LENGTH_SHORT).show();
+
+                }
+
+                return true;
+
+            } else if (Math.abs(dX) < SWIPE_MAX_OFF_PATH &&
+
+                    Math.abs(velocityY) >= SWIPE_THRESHOLD_VELOCITY &&
+
+                    Math.abs(dY) >= SWIPE_MIN_DISTANCE) {
+
+                if (dY > 0) {
+
+                    Toast.makeText(getApplicationContext(), "Up Swipe",
+                            Toast.LENGTH_SHORT).show();
+
+                } else {
+
+                    Toast.makeText(getApplicationContext(), "Down Swipe",
+                            Toast.LENGTH_SHORT).show();
+
+                    if(mFetchedAddressLayout.getVisibility()==View.VISIBLE)
+                    {
+                        Animation fadeInAnimation = AnimationUtils.loadAnimation(MapsActivity.this, R.anim.slide_down_out);
+                        mFetchedAddressLayout.startAnimation(fadeInAnimation);
+                        mFetchedAddressLayout.setVisibility(View.GONE);
+                    }
+
+                }
+
+                return true;
+
+            }
+
+            return false;
+
+        }
     }
 }
