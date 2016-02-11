@@ -20,9 +20,10 @@
 
         <ListView
             android:layout_width="wrap_content"
-            android:layout_height="254dp"
+            android:layout_height="200dp"
             android:choiceMode="none"
-            android:id="@+id/testList" />
+            android:id="@+id/locationList"
+            android:layout_marginTop="50dp" />
 
         <Button
             android:layout_width="wrap_content"
@@ -67,11 +68,24 @@
             android:id="@+id/addressLabel"
             android:layout_gravity="center"
             android:textColor="#000000"
-            android:textSize="25dp"
+            android:textSize="25sp"
             android:textIsSelectable="false"
             android:textStyle="bold"
             android:enabled="false"
             android:visibility="visible" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/swipeDown"
+            android:id="@+id/textView2"
+            android:layout_gravity="center"
+            android:layout_marginBottom="0dp"
+            android:textStyle="italic"
+            android:textSize="15sp"
+            android:layout_marginTop="130dp" />
+
     </FrameLayout>
 
 </FrameLayout>

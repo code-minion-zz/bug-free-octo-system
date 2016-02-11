@@ -2,15 +2,19 @@ package com.example.kit.myapplication;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -40,7 +44,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, View.OnClickListener, GoogleApiClient.ConnectionCallbacks, ActivityCompat.OnRequestPermissionsResultCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, View.OnClickListener, GoogleApiClient.ConnectionCallbacks, ActivityCompat.OnRequestPermissionsResultCallback {
 
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
@@ -75,16 +79,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             View decorView = getWindow().getDecorView();
             int uiOptions = View.SYSTEM_UI_FLAG_LOW_PROFILE | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
             decorView.setSystemUiVisibility(uiOptions);
-            getSupportActionBar().hide();
 
             mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-            mListView = (ListView) findViewById(R.id.testList);
-            mAdapter = new ArrayAdapter<String>(this, R.layout.activity_maps, mListItems);
+            mListView = (ListView) findViewById(R.id.locationList);
+            mAdapter = new ArrayAdapter<String>(this, R.layout.list_view_element, mListItems);
             mListView.setAdapter(mAdapter);
             mLookupButton = (Button) findViewById(R.id.lookupButton);
             mLookupButton.setOnClickListener(this);
-            mFetchedAddressLayout = (FrameLayout)findViewById(R.id.addressFrame);
+            mFetchedAddressLayout = (FrameLayout) findViewById(R.id.addressFrame);
             mAddressLabel = (TextView) mFetchedAddressLayout.getChildAt(0);
 
             mGestureDetector = new GestureDetector(new MyGestureListener());
@@ -106,8 +109,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    public boolean dispatchTouchEVent(MotionEvent ev)
-    {
+    public boolean dispatchTouchEVent(MotionEvent ev) {
         super.dispatchTouchEvent(ev);
 
         return mGestureDetector.onTouchEvent(ev);
@@ -135,8 +137,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // GPS not enabled, alert user
             spawnAlertDialog("ERROR", "GPS Location Services is not enabled, please enable GPS before trying again.");
         } else {
-            if (mLocationListener.currentLocation == null)
-            {
+            if (mLocationListener.currentLocation == null) {
                 spawnAlertDialog("Not Ready", "Your location could not be determined, wait a bit and try again");
                 return;
             }
@@ -144,13 +145,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // GPS enabled, display modal window, request location update, wait for response
             // allow user to cancel location update by dismissing modal window
 //            spawnAlertDialog("SUCCESS", "CLICKED");
-            if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-            {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 Address address = getAddress(mLocationListener.currentLocation);
 
                 // display address window
                 showAddressWindow(address, mLocationListener.currentLocation);
-//                addItems(address);
+                addItems(address);
             }
         }
     }
@@ -167,8 +167,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onStop() {
         super.onStop();
 
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected())
-        {
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
     }
@@ -177,16 +176,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onConnected(Bundle bundle) {
         try {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-            {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 mCurrentLocation = LocationServices
                         .FusedLocationApi
                         .getLastLocation(mGoogleApiClient);
                 mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, mLocationListener);
             }
-        }
-        catch (Error error)
-        {
+        } catch (Error error) {
 
         }
     }
@@ -224,46 +220,34 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-/// helper classes below
-    void showAddressWindow(Address address, LatLng coords)
-    {
+    /// helper classes below
+    void showAddressWindow(Address address, LatLng coords) {
         String currentTimeString = DateFormat.getTimeInstance().format(new Date());
         String stringAddress = "";
-        if (address != null)
-        {
-            for (int i = 0; i < address.getMaxAddressLineIndex(); i++)
-            {
+        if (address != null) {
+            for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
                 stringAddress += address.getAddressLine(i);
             }
-        }
-        else
-        {
+        } else {
             spawnAlertDialog("Not Found", "There are no addresses nearby your location");
             return;
         }
-        mAddressLabel.setText(stringAddress + "\nFetched at " + currentTimeString+ "\n\nGPS Coordinates:\n" + coords.latitude + " " + coords.longitude);
+        mAddressLabel.setText(stringAddress + "\nFetched at " + currentTimeString + "\n\nGPS Coordinates:\n" + coords.latitude + " " + coords.longitude);
         mFetchedAddressLayout.setVisibility(View.VISIBLE);
 
     }
 
-    void setupMap()
-    {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-        {
+    void setupMap() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             mMap.setMyLocationEnabled(true);
-        }
-        else
-        {
+        } else {
             permissionCheck();
         }
     }
 
-    void permissionCheck()
-    {
-        if (ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-        {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION))
-            {
+    void permissionCheck() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
                 AlertDialog alertDialog = new AlertDialog.Builder(this).create();
                 alertDialog.setCancelable(true);
                 alertDialog.setTitle("GPS Location Required");
@@ -284,25 +268,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 {Manifest.permission.ACCESS_FINE_LOCATION},
                         PERMISSION_REQUEST_ACCESS_FINE_LOCATION);
             }
-        }
-        else
-        {
+        } else {
             Log.d("kit", "no need to request permission again");
         }
     }
 
-    void addItems(Address address)
-    {
+    void addItems(Address address) {
         if (address == null) return;
 
         String currentTimeString = DateFormat.getTimeInstance().format(new Date());
-        mListItems.add(0, currentTimeString + " - " + address.getAddressLine(0));
-        mAdapter.notifyDataSetChanged();
         mAdapter.add(currentTimeString + " - " + address.getAddressLine(0));
     }
 
-    void spawnAlertDialog(String title, String message)
-    {
+    void spawnAlertDialog(String title, String message) {
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setTitle(title);
         alertDialog.setMessage(message);
@@ -318,8 +296,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /// returns closest address to given coords
-    Address getAddress(LatLng coords)
-    {
+    Address getAddress(LatLng coords) {
         Geocoder mGeocoder = new Geocoder(this);
         Address address = null;
 
@@ -327,9 +304,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             address = mGeocoder
                     .getFromLocation(coords.latitude, coords.longitude, 1)
                     .get(0);
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             spawnAlertDialog("ERROR", e.getCause().toString());
         }
         return address;
@@ -389,8 +364,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Toast.makeText(getApplicationContext(), "Down Swipe",
                             Toast.LENGTH_SHORT).show();
 
-                    if(mFetchedAddressLayout.getVisibility()==View.VISIBLE)
-                    {
+                    if (mFetchedAddressLayout.getVisibility() == View.VISIBLE) {
                         Animation fadeInAnimation = AnimationUtils.loadAnimation(MapsActivity.this, R.anim.slide_down_out);
                         mFetchedAddressLayout.startAnimation(fadeInAnimation);
                         mFetchedAddressLayout.setVisibility(View.GONE);
@@ -404,6 +378,57 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             return false;
 
+        }
+    }
+
+    public class GPSLocation extends AsyncTask<Void, Void, Void> {
+        boolean running = true;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            LocationManager mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            LocationListener mlocListener = new MyLocationListener();
+            if (ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mlocListener);
+
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+            // Things to be done while execution of long running operation is in progress. For example updating ProgessDialog
+        }
+
+        @Override
+        protected void onPostExecute(Void result)
+        {
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            boolean isDataSubmitted = false;
+
+            while(!isDataSubmitted)
+            {
+//                if(longitude !=0 && latitude!=0)
+//                {
+//                    sendSMS();
+//                    isDataSubmitted = true;
+//                }
+            }
+
+            return null;
         }
     }
 }
