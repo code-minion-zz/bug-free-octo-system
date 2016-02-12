@@ -78,7 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //region "constants"
     final int PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 124;
     final int LOCATION_REFRESH_TIME = 10;
-    final int LOCATION_REFRESH_DISTANCE = 10;
+    final int LOCATION_REFRESH_DISTANCE = 1;
     //endregion
 
     //region "initialization"
@@ -161,11 +161,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //                Address address = getAddress(mLocationListener.currentLocation);
 
                 mGeoLookup = new GeoLookup(this, this, mLocationListener.currentLocation);
+                mGeoLookup.execute();
                 mPleaseWait = new AlertDialog.Builder(this).create();
                 mPleaseWait.setMessage(getString(R.string.pleasewaitforgps));
                 mPleaseWait.setOnCancelListener(this);
                 mPleaseWait.setCancelable(true);
                 mPleaseWait.setCanceledOnTouchOutside(true);
+                mPleaseWait.show();
 
                 // display address window
 //                showAddressWindow(address, mLocationListener.currentLocation);
@@ -173,7 +175,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
     }
-
 
     @Override
     public void onCancel(DialogInterface dialog) {
@@ -185,12 +186,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void onGeoLookupCompleted() {
+        // show window, add item
+        showAddressWindow(mGeoLookup.address, mLocationListener.currentLocation);
+        addItems(mGeoLookup.address);
+
         if (mPleaseWait != null)
         {
             mPleaseWait.cancel();
             mPleaseWait = null;
         }
-        // show window, add item
     }
 
     @Override
