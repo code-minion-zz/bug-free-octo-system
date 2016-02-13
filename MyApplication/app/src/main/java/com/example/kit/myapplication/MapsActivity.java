@@ -8,8 +8,6 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -98,6 +96,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
+            KitSqlHelper dbHandler = new KitSqlHelper(this);
+            mListItems = dbHandler.getAllEntries();
             mListView = (ListView) findViewById(R.id.locationList);
             mAdapter = new LocationsAdapter(this, R.layout.list_view_element, mListItems);
             mListView.setAdapter(mAdapter);
@@ -112,6 +112,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 public boolean onTouch(View v, MotionEvent event) {
                     mGestureDetector.onTouchEvent(event);
 
+                    if (mPleaseWait != null)
+                    {
+                        mPleaseWait.cancel();
+                        mPleaseWait = null;
+                    }
                     return true;
                 }
             });
@@ -156,9 +161,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             // GPS enabled, display modal window, request location update, wait for response
             // allow user to cancel location update by dismissing modal window
-//            spawnAlertDialog("SUCCESS", "CLICKED");
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//                Address address = getAddress(mLocationListener.currentLocation);
 
                 mGeoLookup = new GeoLookup(this, this, mLocationListener.currentLocation);
                 mGeoLookup.execute();
@@ -166,12 +169,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mPleaseWait.setMessage(getString(R.string.pleasewaitforgps));
                 mPleaseWait.setOnCancelListener(this);
                 mPleaseWait.setCancelable(true);
-                mPleaseWait.setCanceledOnTouchOutside(true);
                 mPleaseWait.show();
-
-                // display address window
-//                showAddressWindow(address, mLocationListener.currentLocation);
-//                addItems(address);
             }
         }
     }
@@ -241,15 +239,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
+                    // permission was granted, yay!
                     Log.d("kit", "Permission Granted");
                     setupMap();
 
                 } else {
 
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
+                    // permission denied, boo!
                     Log.d("kit", "Permission Denied");
                 }
                 return;
@@ -258,6 +254,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // other 'case' lines to check for other
             // permissions this app might request
         }
+    }
+    //endregion
+
+    //region "commit changes"
+    protected void onPause()
+    {
+        super.onPause();
+
+        KitSqlHelper dbHelper = new KitSqlHelper(this);
+        dbHelper.recreateTable();
+        dbHelper.saveAllEntries(mListItems);
     }
     //endregion
 
@@ -474,7 +481,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         .getFromLocation(coords.latitude, coords.longitude, 1)
                         .get(0);
             } catch (IOException e) {
-                spawnAlertDialog("ERROR", e.getCause().toString());
+                spawnAlertDialog("ERROR", e.toString());
             }
             return address;
         }
