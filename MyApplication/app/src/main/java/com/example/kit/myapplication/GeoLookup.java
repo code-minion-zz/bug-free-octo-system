@@ -17,13 +17,13 @@ import java.util.List;
  * Created by Kit on 14/02/2016.
  */
 
-public class asdGeoLookup extends AsyncTask<Void, Void, Void> {
+public class GeoLookup extends AsyncTask<Void, Void, Void> {
     private OnGeoLookupCompleted listener;
     public Address address;
     private Context context;
     private LatLng coords;
 
-    public asdGeoLookup(OnGeoLookupCompleted listener, Context context, LatLng coords)
+    public GeoLookup(OnGeoLookupCompleted listener, Context context, LatLng coords)
     {
         this.listener = listener;
         this.context = context;

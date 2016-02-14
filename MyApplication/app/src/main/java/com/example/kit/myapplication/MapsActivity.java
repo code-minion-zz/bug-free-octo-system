@@ -52,7 +52,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //region "other classes that arent widgets"
     private GoogleApiClient mGoogleApiClient;
     private GestureDetector mGestureDetector;
-    private asdGeoLookup mGeoLookup;
+    private GeoLookup mGeoLookup;
     private LocationManager mLocationManager;
     private MyLocationListener mLocationListener = new MyLocationListener();
     //endregion
@@ -164,7 +164,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // allow user to cancel location update by dismissing modal window
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
-                mGeoLookup = new asdGeoLookup(this, this, mLocationListener.currentLocation);
+                mGeoLookup = new GeoLookup(this, this, mLocationListener.currentLocation);
                 mGeoLookup.execute();
                 mPleaseWaitLayout.setVisibility(View.VISIBLE);
             }
