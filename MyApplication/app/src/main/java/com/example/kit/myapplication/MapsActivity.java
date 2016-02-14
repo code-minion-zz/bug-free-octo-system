@@ -7,10 +7,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Address;
-import android.location.Geocoder;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -38,7 +37,6 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -106,7 +104,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mFetchedAddressLayout = (FrameLayout) findViewById(R.id.addressFrame);
             mAddressLabel = (TextView) mFetchedAddressLayout.getChildAt(0);
 
-            mGestureDetector = new GestureDetector(new MyGestureListener());
+            mGestureDetector = new GestureDetector(new SwipeGestureListener());
             mFetchedAddressLayout.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
@@ -132,15 +130,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //endregion
 
     //region "callbacks"
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -221,7 +210,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, mLocationListener);
             }
         } catch (Error error) {
-
+            spawnAlertDialog("ERROR", error.toString());
         }
     }
 
@@ -232,7 +221,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case PERMISSION_REQUEST_ACCESS_FINE_LOCATION: {
                 // If request is cancelled, the result arrays are empty.
@@ -248,7 +237,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     // permission denied, boo!
                     Log.d("kit", "Permission Denied");
                 }
-                return;
             }
 
             // other 'case' lines to check for other
@@ -301,7 +289,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 alertDialog.setTitle("GPS Location Required");
                 alertDialog.setMessage("We need your location to display the blue dot!");
                 final Activity currentActivity = this;
-                alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+                alertDialog.setButton(0, "OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -333,8 +321,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setTitle(title);
         alertDialog.setMessage(message);
-        final Activity currentActivity = this;
-        alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+        alertDialog.setButton(0, "OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
@@ -344,22 +331,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    /// returns closest address to given coords
-    Address getAddress(LatLng coords) {
-        Geocoder mGeocoder = new Geocoder(this);
-        Address address = null;
-
-        try {
-            address = mGeocoder
-                    .getFromLocation(coords.latitude, coords.longitude, 1)
-                    .get(0);
-        } catch (IOException e) {
-            spawnAlertDialog("ERROR", e.getCause().toString());
-        }
-        return address;
-    }
-
-    class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+    class SwipeGestureListener extends GestureDetector.SimpleOnGestureListener {
 
 
         private static final int SWIPE_MIN_DISTANCE = 20;
@@ -430,12 +402,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-//    public class PastLocations
-//    {
-//        public String time;
-//        public String address;
-//    }
-
     public class LocationsAdapter extends ArrayAdapter<String> {
         public LocationsAdapter(Context context, int res, ArrayList<String> locations) {
             super(context, 0, locations);
@@ -456,56 +422,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return convertView;
         }
     }
-
-    public class GeoLookup extends AsyncTask<Void, Void, Void> {
-        boolean running = true;
-        private OnGeoLookupCompleted listener;
-        public Address address;
-        private Context context;
-        private LatLng coords;
-
-        public GeoLookup(OnGeoLookupCompleted listener, Context context, LatLng coords)
-        {
-            this.listener = listener;
-            this.context = context;
-            this.coords = coords;
-        }
-
-        /// returns closest address to given coords
-        Address getAddress(LatLng coords) {
-            Geocoder mGeocoder = new Geocoder(context);
-            Address address = null;
-
-            try {
-                address = mGeocoder
-                        .getFromLocation(coords.latitude, coords.longitude, 1)
-                        .get(0);
-            } catch (IOException e) {
-                spawnAlertDialog("ERROR", e.toString());
-            }
-            return address;
-        }
-
-        @Override
-        protected void onProgressUpdate(Void... values) {
-            super.onProgressUpdate(values);
-            // Things to be done while execution of long running operation is in progress. For example updating ProgessDialog
-
-        }
-
-        @Override
-        protected void onPostExecute(Void result)
-        {
-            listener.onGeoLookupCompleted();
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-
-            address = getAddress(coords);
-
-            return null;
-        }
-    }
-
 }

@@ -5,39 +5,6 @@
     tools:context=".MapActivity"
     android:id="@+id/Frame">
 
-    <fragment xmlns:map="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/map"
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:scrollbars="vertical"
-        class="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_gravity="center_horizontal|top" />
-
-    <TableLayout
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:layout_gravity="bottom"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp">
-
-        <ListView
-            android:layout_width="wrap_content"
-            android:layout_height="220dp"
-            android:choiceMode="none"
-            android:id="@+id/locationList"
-            android:layout_marginTop="30dp" />
-
-        <Button
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:drawable="@drawable/round_shape_button"
-            android:text="@string/lookupButton"
-            android:id="@+id/lookupButton"
-            android:onClick="onClick"
-            android:layout_gravity="bottom" />
-
-    </TableLayout>
-
     <TextView
         android:layout_width="303dp"
         android:layout_height="180dp"
@@ -90,5 +57,45 @@
             android:layout_marginTop="130dp" />
 
     </FrameLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <fragment xmlns:map="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:scrollbars="vertical"
+            class="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_gravity="top" />
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_gravity="top">
+
+            <ListView
+                android:layout_width="wrap_content"
+                android:layout_height="220dp"
+                android:choiceMode="none"
+                android:id="@+id/locationList"
+                android:layout_marginTop="0dp"
+                android:layout_gravity="top" />
+
+            <Button
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:drawable="@drawable/round_shape_button"
+                android:text="@string/lookupButton"
+                android:id="@+id/lookupButton"
+                android:onClick="onClick"
+                android:layout_gravity="bottom" />
+
+        </TableLayout>
+    </LinearLayout>
 
 </FrameLayout>

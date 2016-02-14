@@ -10,17 +10,19 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.Calendar;
 
 /**
+ * Always holds the latest GPS position and timestamp of when
+ *
  * Created by Kit on 10/02/2016.
  */
 public class MyLocationListener implements LocationListener {
 
     public LatLng currentLocation;
-    public int lastUpdate;
+    public long lastUpdate;
 
     @Override
     public void onLocationChanged(Location location) {
         currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-        lastUpdate = Calendar.getInstance().get(Calendar.SECOND);
+        lastUpdate = Calendar.getInstance().getTimeInMillis();
         Log.d("kit", "LocationUpdated");
     }
 
