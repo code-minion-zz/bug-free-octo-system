@@ -206,6 +206,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
+
+        commitChanges();
     }
 
     // following two callbacks relate to GoogleApiClient
@@ -250,13 +252,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // permissions this app might request
         }
     }
-    //endregion
 
-    //region "commit changes"
     protected void onPause()
     {
         super.onPause();
 
+        commitChanges();
+    }
+    //endregion
+
+    //region "commit changes"
+
+    void commitChanges()
+    {
         KitSqlHelper dbHelper = new KitSqlHelper(this);
         dbHelper.recreateTable();
         dbHelper.saveAllEntries(mListItems);
