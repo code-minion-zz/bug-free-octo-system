@@ -73,7 +73,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     //region "constants"
     final int PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 124;
-    final int LOCATION_REFRESH_TIME = 10;
+    final int LOCATION_REFRESH_TIME = 3;
     final int LOCATION_REFRESH_DISTANCE = 1;
     //endregion
 
