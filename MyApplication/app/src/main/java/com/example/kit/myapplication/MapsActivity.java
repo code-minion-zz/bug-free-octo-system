@@ -110,11 +110,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 public boolean onTouch(View v, MotionEvent event) {
                     mGestureDetector.onTouchEvent(event);
 
+                    return true;
+                }
+            });
+
+            FrameLayout topLayout = (FrameLayout)findViewById(R.id.Frame);
+            topLayout.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    // touching anywhere at all cancels lookup
                     if (mPleaseWait != null)
                     {
                         mPleaseWait.cancel();
                         mPleaseWait = null;
                     }
+
                     return true;
                 }
             });

@@ -5,21 +5,41 @@
     tools:context=".MapActivity"
     android:id="@+id/Frame">
 
-    <TextView
-        android:layout_width="303dp"
-        android:layout_height="180dp"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:gravity="center"
-        android:text="@string/pleasewaitforgps"
-        android:id="@+id/textView"
-        android:layout_gravity="center"
-        android:textColor="#c8ffffff"
-        android:textSize="30dp"
-        android:textIsSelectable="false"
-        android:textStyle="bold"
-        android:background="#c9000000"
-        android:enabled="false"
-        android:visibility="invisible" />
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <fragment xmlns:map="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:scrollbars="vertical"
+            class="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_gravity="top" />
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ListView
+                android:layout_width="wrap_content"
+                android:layout_height="220dp"
+                android:choiceMode="none"
+                android:id="@+id/locationList"
+                android:layout_marginTop="0dp"
+                android:layout_gravity="top" />
+
+            <Button
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:drawable="@drawable/round_shape_button"
+                android:text="@string/lookupButton"
+                android:id="@+id/lookupButton"
+                android:onClick="onClick" />
+        </LinearLayout>
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="332dp"
@@ -27,7 +47,7 @@
         android:layout_gravity="center"
         android:background="#ffffff"
         android:id="@+id/addressFrame"
-        android:visibility="invisible">
+        android:visibility="visible">
 
         <TextView
             android:layout_width="303dp"
@@ -58,44 +78,20 @@
 
     </FrameLayout>
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <fragment xmlns:map="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/map"
-            android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:scrollbars="vertical"
-            class="com.google.android.gms.maps.SupportMapFragment"
-            android:layout_gravity="top" />
-
-        <TableLayout
-            android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_gravity="top">
-
-            <ListView
-                android:layout_width="wrap_content"
-                android:layout_height="220dp"
-                android:choiceMode="none"
-                android:id="@+id/locationList"
-                android:layout_marginTop="0dp"
-                android:layout_gravity="top" />
-
-            <Button
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:drawable="@drawable/round_shape_button"
-                android:text="@string/lookupButton"
-                android:id="@+id/lookupButton"
-                android:onClick="onClick"
-                android:layout_gravity="bottom" />
-
-        </TableLayout>
-    </LinearLayout>
+    <TextView
+        android:layout_width="303dp"
+        android:layout_height="180dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:gravity="center"
+        android:text="@string/pleasewaitforgps"
+        android:id="@+id/textView"
+        android:layout_gravity="center"
+        android:textColor="#c8ffffff"
+        android:textSize="30dp"
+        android:textIsSelectable="false"
+        android:textStyle="bold"
+        android:background="#c9000000"
+        android:enabled="false"
+        android:visibility="invisible" />
 
 </FrameLayout>
