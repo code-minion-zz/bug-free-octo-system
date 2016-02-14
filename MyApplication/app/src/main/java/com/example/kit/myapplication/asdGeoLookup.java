@@ -9,6 +9,7 @@ import android.util.Log;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Asynchronous Address Lookup
@@ -16,13 +17,13 @@ import java.io.IOException;
  * Created by Kit on 14/02/2016.
  */
 
-public class GeoLookup extends AsyncTask<Void, Void, Void> {
+public class asdGeoLookup extends AsyncTask<Void, Void, Void> {
     private OnGeoLookupCompleted listener;
     public Address address;
     private Context context;
     private LatLng coords;
 
-    public GeoLookup(OnGeoLookupCompleted listener, Context context, LatLng coords)
+    public asdGeoLookup(OnGeoLookupCompleted listener, Context context, LatLng coords)
     {
         this.listener = listener;
         this.context = context;
@@ -35,9 +36,16 @@ public class GeoLookup extends AsyncTask<Void, Void, Void> {
         Address address = null;
 
         try {
-            address = mGeocoder
-                    .getFromLocation(coords.latitude, coords.longitude, 1)
-                    .get(0);
+            List<Address> addresses = mGeocoder.getFromLocation(coords.latitude, coords.longitude, 1);
+
+            if (addresses.size() > 0)
+            {
+                address = addresses.get(0);
+            }
+            else
+            {
+                address = null;
+            }
         } catch (IOException e) {
             Log.d("E", e.toString());
         }

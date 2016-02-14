@@ -52,7 +52,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //region "other classes that arent widgets"
     private GoogleApiClient mGoogleApiClient;
     private GestureDetector mGestureDetector;
-    private GeoLookup mGeoLookup;
+    private asdGeoLookup mGeoLookup;
     private LocationManager mLocationManager;
     private MyLocationListener mLocationListener = new MyLocationListener();
     //endregion
@@ -103,7 +103,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mLookupButton = (Button) findViewById(R.id.lookupButton);
             mLookupButton.setOnClickListener(this);
             mFetchedAddressLayout = (FrameLayout) findViewById(R.id.addressFrame);
-            mAddressLabel = (TextView) mFetchedAddressLayout.getChildAt(0);
+            mAddressLabel = (TextView) findViewById(R.id.addressLabel);
             mPleaseWaitLayout = (FrameLayout) findViewById(R.id.pleaseWaitLayout);
 
             mGestureDetector = new GestureDetector(new SwipeGestureListener());
@@ -116,8 +116,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             });
 
-            FrameLayout topLayout = (FrameLayout)findViewById(R.id.Frame);
-            topLayout.setOnTouchListener(new View.OnTouchListener() {
+//            FrameLayout topLayout = (FrameLayout)findViewById(R.id.pleaseWaitLayout);
+            mPleaseWaitLayout.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     // touching anywhere at all cancels lookup
@@ -164,13 +164,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // allow user to cancel location update by dismissing modal window
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
-                mGeoLookup = new GeoLookup(this, this, mLocationListener.currentLocation);
+                mGeoLookup = new asdGeoLookup(this, this, mLocationListener.currentLocation);
                 mGeoLookup.execute();
-//                mPleaseWait = new AlertDialog.Builder(this).create();
-//                mPleaseWait.setMessage(getString(R.string.pleasewaitforgps));
-//                mPleaseWait.setOnCancelListener(this);
-//                mPleaseWait.setCancelable(true);
-//                mPleaseWait.show();
                 mPleaseWaitLayout.setVisibility(View.VISIBLE);
             }
         }
@@ -282,7 +277,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         mAddressLabel.setText(stringAddress + "\nFetched at " + currentTimeString + "\n\nGPS Coordinates:\n" + coords.latitude + " " + coords.longitude);
         mFetchedAddressLayout.setVisibility(View.VISIBLE);
-
     }
 
     void setupMap() {
@@ -301,7 +295,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 alertDialog.setTitle("GPS Location Required");
                 alertDialog.setMessage("We need your location to display the blue dot!");
                 final Activity currentActivity = this;
-                alertDialog.setButton(0, "OK", new DialogInterface.OnClickListener() {
+                alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -333,7 +327,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setTitle(title);
         alertDialog.setMessage(message);
-        alertDialog.setButton(0, "OK", new DialogInterface.OnClickListener() {
+        alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
