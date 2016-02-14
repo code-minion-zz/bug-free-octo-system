@@ -47,7 +47,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         View.OnClickListener,
         GoogleApiClient.ConnectionCallbacks,
         ActivityCompat.OnRequestPermissionsResultCallback,
-        DialogInterface.OnCancelListener,
         OnGeoLookupCompleted {
 
     //region "other classes that arent widgets"
@@ -64,7 +63,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FrameLayout mFetchedAddressLayout;
     private TextView mAddressLabel;
     private Button mLookupButton;
-    private AlertDialog mPleaseWait;
+    private FrameLayout mPleaseWaitLayout;
     //endregion
 
     //region "lists and adapters"
@@ -105,6 +104,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mLookupButton.setOnClickListener(this);
             mFetchedAddressLayout = (FrameLayout) findViewById(R.id.addressFrame);
             mAddressLabel = (TextView) mFetchedAddressLayout.getChildAt(0);
+            mPleaseWaitLayout = (FrameLayout) findViewById(R.id.pleaseWaitLayout);
 
             mGestureDetector = new GestureDetector(new SwipeGestureListener());
             mFetchedAddressLayout.setOnTouchListener(new View.OnTouchListener() {
@@ -121,10 +121,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     // touching anywhere at all cancels lookup
-                    if (mPleaseWait != null)
+                    if (mPleaseWaitLayout.isShown())
                     {
-                        mPleaseWait.cancel();
-                        mPleaseWait = null;
+                        mPleaseWaitLayout.setVisibility(View.INVISIBLE);
+                        cancelLookup();
                     }
 
                     return true;
@@ -166,17 +166,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 mGeoLookup = new GeoLookup(this, this, mLocationListener.currentLocation);
                 mGeoLookup.execute();
-                mPleaseWait = new AlertDialog.Builder(this).create();
-                mPleaseWait.setMessage(getString(R.string.pleasewaitforgps));
-                mPleaseWait.setOnCancelListener(this);
-                mPleaseWait.setCancelable(true);
-                mPleaseWait.show();
+//                mPleaseWait = new AlertDialog.Builder(this).create();
+//                mPleaseWait.setMessage(getString(R.string.pleasewaitforgps));
+//                mPleaseWait.setOnCancelListener(this);
+//                mPleaseWait.setCancelable(true);
+//                mPleaseWait.show();
+                mPleaseWaitLayout.setVisibility(View.VISIBLE);
             }
         }
     }
 
-    @Override
-    public void onCancel(DialogInterface dialog) {
+    public void cancelLookup() {
         if (mGeoLookup != null)
         {
             mGeoLookup.cancel(true);
@@ -189,10 +189,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         showAddressWindow(mGeoLookup.address, mLocationListener.currentLocation);
         addItems(mGeoLookup.address);
 
-        if (mPleaseWait != null)
+        if (mPleaseWaitLayout.isShown())
         {
-            mPleaseWait.cancel();
-            mPleaseWait = null;
+            mPleaseWaitLayout.setVisibility(View.INVISIBLE);
+            cancelLookup();
         }
     }
 
